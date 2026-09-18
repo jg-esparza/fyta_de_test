@@ -1,0 +1,14 @@
+.idea/
+.venv/
+__pycache__/
+*.ipynb_checkpoints
+*.pyc
+
+# Data
+*.csv
+
+# Hydra
+outputs/
+.hydra/
+
+
