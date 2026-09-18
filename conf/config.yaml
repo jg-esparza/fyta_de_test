@@ -1,0 +1,31 @@
+project_root: ${hydra:runtime.cwd}
+data_dir: ${project_root}/data
+output_dir: ${project_root}/outputs
+
+files:
+  sensor: fyta_sensor_sample.csv
+  contextual: fyta_contextual.csv
+  images: fyta_images.csv
+  mapping: user_plant_device_map.csv
+
+sensor:
+  expected_interval_minutes: 15
+  expected_tolerance_minutes: 1
+  physical_ranges:
+    soil_moisture_vwc: [0, 100]
+    soil_temp_c: [-20, 60]
+    ec_us_cm: [0, null]
+    light_par: [0, null]
+    air_humidity_pct: [0, 100]
+
+cleaning:
+  invalid_value_action: flag_only  # nan_and_flag | flag_only
+  correct_sens07_temperature_f_to_c: true
+  deduplicate_exact_rows: true
+
+triangulation:
+  event_windows_hours: [6, 24, 48]
+  nearest_image_tolerance_hours: 24
+
+logging:
+  level: INFO
