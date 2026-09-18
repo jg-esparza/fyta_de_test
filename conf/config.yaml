@@ -13,10 +13,14 @@ sensor:
   expected_tolerance_minutes: 1
   physical_ranges:
     soil_moisture_vwc: [0, 100]
-    soil_temp_c: [-20, 60]
+    soil_temp_c: [0, 60]
     ec_us_cm: [0, null]
     light_par: [0, null]
     air_humidity_pct: [0, 100]
+
+validation:
+  schema: True
+
 
 cleaning:
   invalid_value_action: flag_only  # nan_and_flag | flag_only
