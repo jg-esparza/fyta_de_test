@@ -10,7 +10,7 @@ from omegaconf import DictConfig
 
 from .logging_utils import configure_logging
 from .io import ensure_dir, load_inputs
-from .cleaning import clean_sensor_data, parse_context_logs
+from .cleaning import clean_sensor_data, parse_context_logs, parse_images
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
 def main(cfg: DictConfig) -> None:
@@ -29,6 +29,8 @@ def main(cfg: DictConfig) -> None:
     parsed_context = parse_context_logs(data["contextual"])
     parsed_context.to_csv(output_dir / "cleaned" / "context_cleaned.csv", index=False)
 
+    parsed_images = parse_images(data["images"])
+    parsed_images.to_csv(output_dir / "cleaned" / "images_cleaned.csv", index=False)
 
 if __name__ == "__main__":
     main()

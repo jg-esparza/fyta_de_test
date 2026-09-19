@@ -15,6 +15,16 @@ from .validation import validate_schema, validate_duplicates, validate_nulls, va
 
 LOGGER = logging.getLogger(__name__)
 
+DISEASE_COLUMNS = {
+    "Abiotic": "image_abiotic_probability",
+    "Water-related issue": "image_water_related_probability",
+    "Water deficiency": "image_water_deficiency_probability",
+    "Nutrient deficiency": "image_nutrient_deficiency_probability",
+    "Fungi": "image_fungi_probability",
+    "Animalia": "image_animalia_probability",
+    "Water excess and/or uneven watering": "image_water_excess_probability",
+}
+
 def handle_duplicates(df: pd.DataFrame, dataset:str, deduplicate_exact_rows: bool = False) -> pd.DataFrame:
     """Handle exact duplicate values."""
     LOGGER.info("[%s] Handling duplicates, deduplicate_exact_rows=%s", dataset, deduplicate_exact_rows)
@@ -97,4 +107,68 @@ def clean_sensor_data(sensor: pd.DataFrame, mapping: pd.DataFrame, cfg: DictConf
         how="left",
         validate="many_to_one",
     )
+    return df
+
+def parse_context_logs(context: pd.DataFrame) -> pd.DataFrame:
+    """Parse contextual user logs into structured plant-care events."""
+    dataset_name = "contextual"
+    df = context.copy()
+    issues: list[dict[str, Any]] = []
+    # Validation
+    validate_schema(df, dataset_name, issues)
+    validate_nulls(df, dataset_name, issues)
+    # Handle duplicates
+    validate_duplicates(df, dataset_name, issues)
+    LOGGER.info("[%s] Parsing contextual user logs into structured plant-care events", dataset_name)
+    df["created_at"] = pd.to_datetime(df["created_at"], errors="coerce", format="mixed")
+
+    df["event_watering"] = df["log_type"].eq("watering")
+    df["event_fertilising"] = df["log_type"].eq("fertilising")
+    df["event_repotting"] = df["log_type"].eq("repotting")
+    df["event_light"] = df["log_type"].eq("light")
+    return df
+
+def _parse_prediction(value: Any) -> dict[str, Any]:
+    """Parse a prediction value and return it as a dict."""
+    if isinstance(value, dict):
+        return value
+    return json.loads(value)
+
+def parse_images(images: pd.DataFrame) -> pd.DataFrame:
+    """Parse and normalize image-model predictions.
+
+    Extracts probabilistic plant-health signals from the image prediction JSON
+    without treating model predictions as ground-truth labels."""
+
+    dataset_name = "images"
+    df = images.copy()
+    issues: list[dict[str, Any]] = []
+    # Validation
+    validate_schema(df, dataset_name, issues)
+    validate_nulls(df, dataset_name, issues)
+    # Handle duplicates
+    validate_duplicates(df, dataset_name, issues)
+
+    df["captured_at"] = pd.to_datetime(df["captured_at"], errors="coerce", format="mixed")
+    parsed = df["prediction"].map(_parse_prediction)
+    df["image_is_plant_probability"] = parsed.map(lambda x: x.get("is_plant_probability"))
+    health = parsed.map(lambda x: x.get("health_assessment", {}))
+    df["image_healthy_probability"] = health.map(lambda x: x.get("is_healthy_probability"))
+    df["image_model_version"] = parsed.map(lambda x: x.get("model_version"))
+
+    def disease_dict(item: dict[str, Any]) -> dict[str, float]:
+        return {
+            str(d.get("name")): float(d.get("probability", 0.0))
+            for d in item.get("diseases", [])
+            if d.get("name") is not None
+        }
+
+    disease_maps = health.map(disease_dict)
+    for disease, column in DISEASE_COLUMNS.items():
+        df[column] = disease_maps.map(lambda x, name=disease: x.get(name, 0.0))
+
+    df["image_top_condition"] = disease_maps.map(
+        lambda x: max(x, key=x.get) if x else None
+    )
+    LOGGER.info("Parsed %s image predictions", len(df))
     return df
