@@ -9,6 +9,9 @@ files:
   mapping: user_plant_device_map.csv
 
 sensor:
+  timestamp_format:
+    target_format: iso_8601
+
   expected_interval_minutes: 15
   expected_tolerance_minutes: 1
   physical_ranges:
@@ -17,10 +20,6 @@ sensor:
     ec_us_cm: [0, null]
     light_par: [0, null]
     air_humidity_pct: [0, 100]
-
-validation:
-  schema: True
-
 
 cleaning:
   invalid_value_action: flag_only  # nan_and_flag | flag_only

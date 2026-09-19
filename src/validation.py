@@ -76,33 +76,22 @@ def validate_duplicates(df: pd.DataFrame, dataset: str, issues: list[dict[str, A
     )
 
 
-def parse_mixed_timestamp(series: pd.Series) -> tuple[pd.Series, pd.Series]:
-    """Parse known timestamp families explicitly."""
-    raw = series.astype("string")
-    parsed = pd.Series(pd.NaT, index=series.index, dtype="datetime64[ns]")
-    slash = raw.str.contains("/", regex=False, na=False)
-    parsed.loc[~slash] = pd.to_datetime(raw.loc[~slash], errors="coerce", format="mixed")
-    parsed.loc[slash] = pd.to_datetime(raw.loc[slash], errors="coerce", dayfirst=True, format="mixed")
-    failures = parsed.isna() & series.notna()
-    return parsed, failures
-
-
-def validate_timestamps(df: pd.DataFrame, dataset: str, column: str, issues: list[dict[str, Any]]) -> pd.Series:
+def validate_timestamps(df: pd.DataFrame, dataset: str, column: str, target_format: str, issues: list[dict[str, Any]]) -> pd.Series:
     """Validates timestamp formats."""
     raw = df[column].astype("string")
-    parsed, failures = parse_mixed_timestamp(raw)
-    count = int(failures.sum())
-    slash_format = int(raw.str.contains("/", regex=False, na=False).sum())
-    iso_like = int(raw.str.contains("-", regex=False, na=False).sum())
+    if target_format == "iso_8601":
+        iso_like = int(raw.str.contains("-", regex=False, na=False).sum())
+        wrong_format = raw.count() - iso_like
+    else:
+        raise NotImplementedError(f"{target_format} format not implemented")
     _add_issue(
         issues,
-        "ERROR" if count else "INFO",
+        "INFO" if wrong_format == 0 else "WARNING",
         dataset,
-        "timestamp_parse",
-        f"Timestamp parse failures in {column}" if count else f"All {column} values parsed to ISO-like; from slash-format={slash_format}, ISO-like={iso_like}",
-        count,
+        f"timestamp format:{target_format}",
+        f"Values different format in {column}" if wrong_format else f"All {column} values with same format",
+        wrong_format,
     )
-    return parsed
 
 
 def validate_sampling(sensor: pd.DataFrame, interval_minutes: int, issues: list[dict[str, Any]]) -> pd.DataFrame:
@@ -116,7 +105,7 @@ def validate_sampling(sensor: pd.DataFrame, interval_minutes: int, issues: list[
         issues,
         "WARNING" if count else "INFO",
         "sensor",
-        "sampling_gaps",
+        f"sampling_gaps:expected_interval_minutes:{interval_minutes}",
         f"Intervals longer than {interval_minutes} minutes detected" if count else "No sampling gaps detected",
         count,
     )
@@ -135,27 +124,26 @@ def validate_ranges(sensor: pd.DataFrame, ranges: dict[str, Any], issues: list[d
             issues,
             "WARNING" if count else "INFO",
             "sensor",
-            f"range:{column}",
-            f"Out-of-range values {lo}-{hi}: below={below}, above={above}" if count else "All values within configured range",
+            f"range:{column}:{lo}-{hi}",
+            f"Out-of-range values: below={below}, above={above}" if count else "All values within configured range",
             count,
         )
 
-def run_validation(data: dict[str, pd.DataFrame], cfg: Any) -> pd.DataFrame:
+def run_validation(data: dict[str, pd.DataFrame], cfg: dict) -> pd.DataFrame:
     issues: list[dict[str, Any]] = []
     """Run data validation pipeline."""
     for dataset, df in data.items():
         validate_schema(df, dataset, issues)
         validate_nulls(df, dataset, issues)
         validate_duplicates(df, dataset, issues)
-
-    sensor = data["sensor"]
-    sensor = sensor.copy()
-    sensor["timestamp"] = validate_timestamps(sensor, "sensor", "timestamp", issues)
-    for dataset, column in [("contextual", "created_at"), ("images", "captured_at")]:
-        validate_timestamps(data[dataset], dataset, column, issues)
-
-    sensor = validate_sampling(sensor, int(cfg.sensor.expected_interval_minutes), issues)
-    validate_ranges(sensor, dict(cfg.sensor.physical_ranges), issues)
+        if dataset == "sensor":
+            validate_timestamps(df, "sensor", "timestamp", str(cfg.sensor.timestamp_format.target_format), issues)
+            validate_sampling(df, int(cfg.sensor.expected_interval_minutes), issues)
+            validate_ranges(df, dict(cfg.sensor.physical_ranges), issues)
+        elif dataset == "contextual":
+            validate_timestamps(df, "contextual", "created_at", str(cfg.sensor.timestamp_format.target_format), issues)
+        elif dataset == "images":
+            validate_timestamps(df, "images", "captured_at", str(cfg.sensor.timestamp_format.target_format), issues)
 
     result = pd.DataFrame(issues)
     return result
