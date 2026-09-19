@@ -141,7 +141,7 @@ def run_validation(data: dict[str, pd.DataFrame], cfg: DictConfig) -> pd.DataFra
             validate_sampling(df, int(cfg.sensor.expected_interval_minutes), issues)
             validate_ranges(df, dict(cfg.sensor.physical_ranges), issues)
         elif dataset == "contextual":
-            validate_timestamps(df, "contextual", "created_at", str(cfg.sensor.timestamp_format), issues)
+            validate_timestamps(df, "contextual", "created_at", str(cfg.sensor.timestamp_format.target_format), issues)
         elif dataset == "images":
             validate_timestamps(df, "images", "captured_at", str(cfg.sensor.timestamp_format.target_format), issues)
 

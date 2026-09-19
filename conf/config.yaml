@@ -17,8 +17,8 @@ sensor:
   physical_ranges:
     soil_moisture_vwc: [0, 100]
     soil_temp_c: [0, 60]
-    ec_us_cm: [0, null]
-    light_par: [0, null]
+    ec_us_cm: [0, null] # Review values with domain expert
+    light_par: [0, null] # Review values with domain expert
     air_humidity_pct: [0, 100]
 
 cleaning:
