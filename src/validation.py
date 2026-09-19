@@ -4,11 +4,11 @@ This module detects structural, completeness, timestamp, sampling,
 and physical-plausibility issues without modifying the input data.
 """
 import logging
-from pathlib import Path
-from typing import Any
 
-import numpy as np
 import pandas as pd
+
+from typing import Any
+from omegaconf import DictConfig
 
 LOGGER = logging.getLogger(__name__)
 
@@ -76,7 +76,7 @@ def validate_duplicates(df: pd.DataFrame, dataset: str, issues: list[dict[str, A
     )
 
 
-def validate_timestamps(df: pd.DataFrame, dataset: str, column: str, target_format: str, issues: list[dict[str, Any]]) -> pd.Series:
+def validate_timestamps(df: pd.DataFrame, dataset: str, column: str, target_format: str, issues: list[dict[str, Any]]):
     """Validates timestamp formats."""
     raw = df[column].astype("string")
     if target_format == "iso_8601":
@@ -129,7 +129,7 @@ def validate_ranges(sensor: pd.DataFrame, ranges: dict[str, Any], issues: list[d
             count,
         )
 
-def run_validation(data: dict[str, pd.DataFrame], cfg: dict) -> pd.DataFrame:
+def run_validation(data: dict[str, pd.DataFrame], cfg: DictConfig) -> pd.DataFrame:
     issues: list[dict[str, Any]] = []
     """Run data validation pipeline."""
     for dataset, df in data.items():
@@ -141,7 +141,7 @@ def run_validation(data: dict[str, pd.DataFrame], cfg: dict) -> pd.DataFrame:
             validate_sampling(df, int(cfg.sensor.expected_interval_minutes), issues)
             validate_ranges(df, dict(cfg.sensor.physical_ranges), issues)
         elif dataset == "contextual":
-            validate_timestamps(df, "contextual", "created_at", str(cfg.sensor.timestamp_format.target_format), issues)
+            validate_timestamps(df, "contextual", "created_at", str(cfg.sensor.timestamp_format), issues)
         elif dataset == "images":
             validate_timestamps(df, "images", "captured_at", str(cfg.sensor.timestamp_format.target_format), issues)
 
