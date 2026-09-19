@@ -23,7 +23,7 @@ sensor:
 
 cleaning:
   invalid_value_action: flag_only  # nan_and_flag | flag_only
-  correct_sens07_temperature_f_to_c: true
+  correct_temperature_f_to_c: true
   deduplicate_exact_rows: true
 
 triangulation:

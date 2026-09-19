@@ -63,7 +63,7 @@ def validate_nulls(df: pd.DataFrame, dataset: str, issues: list[dict[str, Any]])
         )
 
 
-def validate_duplicates(df: pd.DataFrame, dataset: str, issues: list[dict[str, Any]]) -> None:
+def validate_duplicates(df: pd.DataFrame, dataset: str, issues: list[dict[str, Any]]) -> int:
     """Validates duplicate values."""
     exact = int(df.duplicated().sum())
     _add_issue(
@@ -74,9 +74,10 @@ def validate_duplicates(df: pd.DataFrame, dataset: str, issues: list[dict[str, A
         "Exact duplicate rows detected" if exact else "No exact duplicate rows",
         exact,
     )
+    return True if exact > 0 else False
 
 
-def validate_timestamps(df: pd.DataFrame, dataset: str, column: str, target_format: str, issues: list[dict[str, Any]]):
+def validate_timestamps(df: pd.DataFrame, dataset: str, column: str, target_format: str, issues: list[dict[str, Any]]) -> int:
     """Validates timestamp formats."""
     raw = df[column].astype("string")
     if target_format == "iso_8601":
@@ -92,6 +93,7 @@ def validate_timestamps(df: pd.DataFrame, dataset: str, column: str, target_form
         f"Values different format in {column}" if wrong_format else f"All {column} values with same format",
         wrong_format,
     )
+    return wrong_format
 
 
 def validate_sampling(sensor: pd.DataFrame, interval_minutes: int, issues: list[dict[str, Any]]) -> pd.DataFrame:
