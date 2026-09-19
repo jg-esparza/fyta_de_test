@@ -11,6 +11,7 @@ from omegaconf import DictConfig
 from .logging_utils import configure_logging
 from .io import ensure_dir, load_inputs
 from .cleaning import clean_sensor_data, parse_context_logs, parse_images
+from .features import build_unified_plant_table
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
 def main(cfg: DictConfig) -> None:
@@ -31,6 +32,14 @@ def main(cfg: DictConfig) -> None:
 
     parsed_images = parse_images(data["images"])
     parsed_images.to_csv(output_dir / "cleaned" / "images_cleaned.csv", index=False)
+
+    plant_features = build_unified_plant_table(
+        cleaned_sensor,
+        parsed_context,
+        parsed_images,
+        tolerance_hours=int(cfg.triangulation.nearest_image_tolerance_hours),
+    )
+    plant_features.to_csv(output_dir / "features" / "plant_features_15min.csv", index=False)
 
 if __name__ == "__main__":
     main()
