@@ -15,16 +15,6 @@ from .validation import validate_schema, validate_duplicates, validate_nulls, va
 
 LOGGER = logging.getLogger(__name__)
 
-DISEASE_COLUMNS = {
-    "Abiotic": "image_abiotic_probability",
-    "Water-related issue": "image_water_related_probability",
-    "Water deficiency": "image_water_deficiency_probability",
-    "Nutrient deficiency": "image_nutrient_deficiency_probability",
-    "Fungi": "image_fungi_probability",
-    "Animalia": "image_animalia_probability",
-    "Water excess and/or uneven watering": "image_water_excess_probability",
-}
-
 def handle_duplicates(df: pd.DataFrame, dataset:str, deduplicate_exact_rows: bool = False) -> pd.DataFrame:
     """Handle exact duplicate values."""
     LOGGER.info("[%s] Handling duplicates, deduplicate_exact_rows=%s", dataset, deduplicate_exact_rows)
@@ -107,15 +97,4 @@ def clean_sensor_data(sensor: pd.DataFrame, mapping: pd.DataFrame, cfg: DictConf
         how="left",
         validate="many_to_one",
     )
-    return df
-
-def parse_context_logs(context: pd.DataFrame) -> pd.DataFrame:
-    """Parse contextual user logs into structured plant-care events."""
-    df = context.copy()
-    df["created_at"] = pd.to_datetime(df["created_at"], errors="coerce", format="mixed")
-
-    df["event_watering"] = df["log_type"].eq("watering")
-    df["event_fertilising"] = df["log_type"].eq("fertilising")
-    df["event_repotting"] = df["log_type"].eq("repotting")
-    df["event_light"] = df["log_type"].eq("light")
     return df
