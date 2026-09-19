@@ -33,6 +33,17 @@ def handle_duplicates(df: pd.DataFrame, dataset:str, deduplicate_exact_rows: boo
         df = df.loc[~df["duplicate_exact_flag"]].copy()
     return df
 
+def normalize_datetime(series: pd.Series) -> pd.Series:
+    """Return a timezone-naive datetime64[ns] Series.
+
+    All datetime keys used in merge_asof must share the same dtype.
+    """
+    result = pd.to_datetime(series, errors="coerce")
+
+    if result.dt.tz is not None:
+        result = result.dt.tz_convert("UTC").dt.tz_localize(None)
+    return result.astype("datetime64[ns]")
+
 def parse_mixed_timestamp(series: pd.Series, dataset:str) -> pd.Series:
     """Parse known timestamp into iso_8601 format."""
     LOGGER.info("[%s] Standardize timestamp into target format", dataset)
@@ -88,6 +99,7 @@ def clean_sensor_data(sensor: pd.DataFrame, mapping: pd.DataFrame, cfg: DictConf
     if wrong_format:
         df["timestamp"] = parse_mixed_timestamp(df["timestamp"], dataset_name)
 
+    df["timestamp"] = normalize_datetime(df["timestamp"])
     # Preserve raw values before any transformation.
     measurements = ["soil_moisture_vwc", "soil_temp_c", "ec_us_cm", "light_par", "air_humidity_pct"]
     for col in measurements:
@@ -121,6 +133,7 @@ def parse_context_logs(context: pd.DataFrame) -> pd.DataFrame:
     validate_duplicates(df, dataset_name, issues)
     LOGGER.info("[%s] Parsing contextual user logs into structured plant-care events", dataset_name)
     df["created_at"] = pd.to_datetime(df["created_at"], errors="coerce", format="mixed")
+    df["created_at"] = normalize_datetime(df["created_at"])
 
     df["event_watering"] = df["log_type"].eq("watering")
     df["event_fertilising"] = df["log_type"].eq("fertilising")
@@ -150,6 +163,8 @@ def parse_images(images: pd.DataFrame) -> pd.DataFrame:
     validate_duplicates(df, dataset_name, issues)
 
     df["captured_at"] = pd.to_datetime(df["captured_at"], errors="coerce", format="mixed")
+    df["captured_at"] = normalize_datetime(df["captured_at"])
+
     parsed = df["prediction"].map(_parse_prediction)
     df["image_is_plant_probability"] = parsed.map(lambda x: x.get("is_plant_probability"))
     health = parsed.map(lambda x: x.get("health_assessment", {}))
@@ -170,5 +185,5 @@ def parse_images(images: pd.DataFrame) -> pd.DataFrame:
     df["image_top_condition"] = disease_maps.map(
         lambda x: max(x, key=x.get) if x else None
     )
-    LOGGER.info("Parsed %s image predictions", len(df))
+    LOGGER.info("[%s] Parsed %s image predictions", dataset_name,len(df))
     return df
