@@ -12,7 +12,7 @@ what's still open.
 - **Severity**: Medium.
 - **Classification**: Sensor/ingestion, not physical.
 
-- ## 2. Mixed timestamp formats - SENS-07
+## 2. Mixed timestamp formats - SENS-07
 - **What**: SENS-07 reports `dd/mm/yyyy HH:MM`; every other device reports
   `yyyy-mm-dd HH:MM:SS`.
 - **Detected by**: `validate_timestamps` (format-match count per configured
@@ -106,13 +106,3 @@ what's still open.
   The near-zero correlation leans toward "distinct plants" but is not proof.
   **Need**: ask whoever owns the FYTA app's plant-creation flow. See
   "Cleaning decision" below for the interim approach.
-
----
-
-## What I'd check with more time
-- Validate with logs on issue #4 on SENS-06
-- Add function to detect units before convert.
-- Define ranges with domain experts for `ec_us_cm` and `light_par`.
-- Confirm with product/ops whether multi-device `user_plant_id`s represent
-  redundant sensors or distinct plants — this affects both
-  feature construction and any per-plant modeling built on top of it.
