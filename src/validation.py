@@ -352,10 +352,6 @@ def run_validation(data: dict[str, pd.DataFrame], cfg: DictConfig) -> pd.DataFra
             validate_row_counts(df, timestamps, int(cfg.sensor.expected_interval_minutes), issues)
             validate_ranges(df, dict(cfg.sensor.physical_ranges), issues)
             validate_flatline(df, timestamps, list(cfg.sensor.flatline_columns), int(cfg.sensor.flatline_min_run), issues)
-            validate_needs_expert_review(
-                df, timestamps, list(cfg.sensor.expert_review_columns),
-                float(cfg.sensor.expert_review_z_threshold), str(cfg.sensor.expert_review_window), issues,
-            )
         elif dataset == "contextual":
             validate_timestamps(df, dataset, "created_at", formats, issues)
         elif dataset == "images":

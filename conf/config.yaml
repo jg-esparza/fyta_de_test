@@ -23,11 +23,8 @@ sensor:
     light_par: [0, null] # Review values with domain expert
     air_humidity_pct: [0, 100]
 
-  flatline_columns: [ soil_moisture_vwc, soil_temp_c, ec_us_cm , light_par, air_humidity_pct]
+  flatline_columns: [soil_moisture_vwc, soil_temp_c, ec_us_cm , light_par, air_humidity_pct]
   flatline_min_run: 8
-  expert_review_columns: [ ec_us_cm, light_par ]           # report-only, never auto-cleaned
-  expert_review_z_threshold: 3.0
-  expert_review_window: "3D"
 
 cleaning:
   invalid_value_action: flag_only  # nan_and_flag | flag_only
