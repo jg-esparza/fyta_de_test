@@ -114,5 +114,5 @@ what's still open.
 - Add function to detect units before convert.
 - Define ranges with domain experts for `ec_us_cm` and `light_par`.
 - Confirm with product/ops whether multi-device `user_plant_id`s represent
-  redundant sensors or distinct plants (finding #8) — this affects both
+  redundant sensors or distinct plants — this affects both
   feature construction and any per-plant modeling built on top of it.
