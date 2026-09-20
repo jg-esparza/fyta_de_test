@@ -10,10 +10,12 @@ files:
 
 sensor:
   timestamp_format:
-    target_format: iso_8601
+    formats: ["%Y-%m-%d %H:%M:%S", "%d/%m/%Y %H:%M"]   # replaces target_format: iso_8601
 
   expected_interval_minutes: 15
   expected_tolerance_minutes: 1
+
+
   physical_ranges:
     soil_moisture_vwc: [0, 100]
     soil_temp_c: [0, 60]
@@ -21,14 +23,22 @@ sensor:
     light_par: [0, null] # Review values with domain expert
     air_humidity_pct: [0, 100]
 
+  flatline_columns: [ soil_moisture_vwc, soil_temp_c, ec_us_cm , light_par, air_humidity_pct]
+  flatline_min_run: 8
+  expert_review_columns: [ ec_us_cm, light_par ]           # report-only, never auto-cleaned
+  expert_review_z_threshold: 3.0
+  expert_review_window: "3D"
+
 cleaning:
   invalid_value_action: flag_only  # nan_and_flag | flag_only
   correct_temperature_f_to_c: true
   deduplicate_exact_rows: true
+  f_to_c_device_ids: [ SENS-07 ]                           # was hardcoded in code
+  unreliable_device_ids: [ SENS-06 ]                        # from validate_flatline's findings
 
 triangulation:
   event_windows_hours: [6, 24, 48]
-  nearest_image_tolerance_hours: 24
+  nearest_image_tolerance_hours: 2
 
 logging:
   level: INFO
