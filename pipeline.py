@@ -17,6 +17,7 @@ from src.io import ensure_dir, load_inputs, export_to_csv
 from src.validation import run_validation
 from src.cleaning import clean_sensor_data, parse_context_logs, parse_images
 from src.features import build_unified_plant_table
+from src.triangulation import run_triangulation
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
@@ -52,6 +53,10 @@ def main(cfg: DictConfig) -> None:
     )
     export_to_csv(plant_features, output_dir / "features" / "plant_features_15min.csv")
 
+    triangulation_results = run_triangulation(cleaned_sensor, parsed_context, parsed_images, data["mapping"], cfg)
+    tri_dir = output_dir / "triangulation"
+    for name, df in triangulation_results.items():
+        export_to_csv(df, tri_dir / f"{name}.csv")
 
 if __name__ == "__main__":
     main()

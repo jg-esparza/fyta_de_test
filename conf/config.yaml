@@ -34,8 +34,28 @@ cleaning:
   unreliable_device_ids: [ SENS-06 ]                        # from validate_flatline's findings
 
 triangulation:
-  event_windows_hours: [6, 24, 48]
   nearest_image_tolerance_hours: 2
+  log_sensor_rules:
+    - log_type: watering
+      sensor_column: soil_moisture_vwc
+      expected_direction: increase
+      response_window_hours: 6
+      baseline_window_hours: 6
+    - log_type: fertilising
+      sensor_column: ec_us_cm
+      expected_direction: increase
+      response_window_hours: 48
+      baseline_window_hours: 24
+  image_sensor_rules:
+    - condition: "Water deficiency"
+      sensor_column: soil_moisture_vwc
+      expected_direction: below_median
+    - condition: "Water excess and/or uneven watering"
+      sensor_column: soil_moisture_vwc
+      expected_direction: above_median
+    - condition: "Nutrient deficiency"
+      sensor_column: ec_us_cm
+      expected_direction: below_median
 
 logging:
   level: INFO
