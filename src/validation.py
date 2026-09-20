@@ -265,38 +265,6 @@ def validate_flatline(
             )
 
 
-def validate_needs_expert_review(
-    sensor: pd.DataFrame, timestamps: pd.Series, columns: list[str], z_threshold: float,
-    window: str, issues: list[dict[str, Any]],
-) -> None:
-    """Surface unusual regimes for columns we've deliberately chosen not to
-    hard-clean (e.g. ec_us_cm, light_par with an open upper bound pending
-    domain input).
-
-    This is informational only -- always INFO, never blocks or corrects
-    anything -- but without it, nothing tells a reviewer where to look. It
-    reports, per device, the largest rolling-mean deviation from that
-    device's own baseline, so a domain expert reviewing the report has
-    concrete evidence (which device, how far off, over what window) instead
-    of having to re-explore the raw CSVs themselves.
-    """
-    df = sensor.assign(timestamp=timestamps).sort_values(["device_id", "timestamp"])
-    for column in columns:
-        for device_id, group in df.groupby("device_id"):
-            series = group.set_index("timestamp")[column]
-            baseline_mean, baseline_std = series.mean(), series.std()
-            if not baseline_std or pd.isna(baseline_std):
-                continue
-            rolling_mean = series.rolling(window).mean()
-            max_z = float(((rolling_mean - baseline_mean).abs() / baseline_std).max())
-            _add_issue(
-                issues, "INFO", "sensor", f"needs_expert_review:{device_id}:{column}",
-                f"Max rolling-mean deviation from device baseline: {max_z:.2f} std (window {window}); "
-                f"left unflagged/uncorrected pending domain review -- see physical_ranges config",
-                1 if max_z > z_threshold else 0,
-            )
-
-
 def validate_image_predictions(images: pd.DataFrame, issues: list[dict[str, Any]]) -> None:
     """Validate that each row's `prediction` field is well-formed JSON with the
     expected top-level keys.
