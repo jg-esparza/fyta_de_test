@@ -1,4 +1,4 @@
-"""Hydra entry point for the complete FYTA processing pipeline.
+"""pipeline.py. Hydra entry point for the complete FYTA processing pipeline.
 
 Coordinates loading, validation, cleaning, feature construction,
 and cross-modal analysis.
