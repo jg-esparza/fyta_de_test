@@ -33,11 +33,12 @@ fyta_de_test/
 │ ├── features.py                # build unified plant table
 │ └── triangulation.py           # cross-modal agreement checks
 │
-├── outputs/                     # outputs per layer
-│ ├── validation/                
-│ ├── cleaned/ 
-│ ├── features/ 
-│ └── triangulation/ 
+├── outputs/                     # outputs csv files per layer
+│ ├── profiling/                 # per-entity summary tables
+│ ├── validation/                # data validation, data quality report + cleaning actions
+│ ├── cleaned/                   # cleaned sensor, contextual and images 
+│ ├── features/                  # unified table
+│ └── triangulation/             # cross validation, feature triangulation 
 │
 ├── analyze.py                   # profiling + validation report only
 ├── pipeline.py                  # validation, cleaning, build unified plant table, triangulation 
@@ -64,8 +65,8 @@ fyta_de_test/
 Create a virtual environment and install the project dependencies:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+conda create -n venv python=3.12
+conda activate venv
 pip install -r requirements.txt
 ```
 
