@@ -31,3 +31,8 @@ def ensure_dir(path: Path) -> Path:
     """Ensures a directory exists."""
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+def export_to_csv(df: pd.DataFrame, path: Path) -> None:
+    """Exports a pandas DataFrame to a CSV file."""
+    df.to_csv(path, index=False)
+    LOGGER.info("Saved data into %s", path)
