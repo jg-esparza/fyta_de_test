@@ -8,8 +8,10 @@ from pathlib import Path
 import hydra
 from omegaconf import DictConfig
 
+
 from .logging_utils import configure_logging
 from .io import ensure_dir, load_inputs
+from .profile_sensor import profile_datasets
 from .validation import run_validation
 
 
@@ -18,10 +20,15 @@ def main(cfg: DictConfig) -> None:
     """Run validation pipeline and create validation quality report."""
     configure_logging(str(cfg.logging.level))
     data = load_inputs(Path(str(cfg.data_dir)), dict(cfg.files))
+
+    profiles = profile_datasets(data)
+    profiling_dir = ensure_dir(Path(str(cfg.output_dir)) / "profiling")
+    for name, df in profiles.items():
+        df.to_csv(profiling_dir / f"{name}.csv", index=False)
+
     report = run_validation(data, cfg)
     output = ensure_dir(Path(str(cfg.output_dir)) / "validation")
     report.to_csv(output / "data_quality_report.csv", index=False)
-
 
 
 if __name__ == "__main__":
